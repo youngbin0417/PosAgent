@@ -1,0 +1,45 @@
+PosAgent Shared Work Log
+========================
+
+Purpose
+-------
+This is the shared handoff log for all agents working in this workspace. Read it before making changes. Append a dated entry after completing work; do not rewrite prior entries. Keep entries factual and concise. Record changed paths, behavior, verification commands/results, and remaining gaps. Never put credentials, tokens, or other secrets here.
+
+Current project status
+----------------------
+- Project root was organized into include/, src/, examples/, tests/, docs/, and build/.
+- The runtime exposes a bounded synchronous mock agent loop: model callback -> one registered tool -> model callback -> final response.
+- Tool metadata (name, description, argument schema) is passed to the model callback. The previous tool result is available on the next turn.
+- Tool callbacks own JSON argument parsing and validation; the runtime does not provide a generic JSON parser or JSON Schema validator.
+- No external LLM/network provider adapter, persistent conversation history, multiple tool calls per response, retries, or enforced timeout/cancellation is implemented.
+- The Windows and WSL Ubuntu demo/test scripts have both passed.
+- This workspace did not contain a .git directory when checked. .gitignore exists, but Git ignore rules take effect only inside a Git repository.
+
+Verification
+------------
+Windows:
+  make -B all test run
+  powershell -ExecutionPolicy Bypass -File .\tests\validate_windows_demo.ps1
+
+WSL Ubuntu:
+  wsl bash /mnt/c/Projects/posagent/tests/validate_wsl_demo.sh
+
+Expected evidence:
+- Behavior tests print: All PosAgent tests passed
+- Validation scripts print: [4/4] Success
+- Demo prints: agent response: The doubled value is 14.
+
+Recent work
+-----------
+[2026-09-29] Organized the project into source, include, example, test, and docs folders; added Makefile, README, and .gitignore. Archived the original combined source and legacy drafts.
+
+[2026-09-30] Added posagent_agent_tool_register() and posagent_context_run_agent(). The bounded loop advertises registered tools, dispatches one requested tool, forwards its result to the next model turn, and returns final text. Added mock integration demo/tests for round-trip, unknown tool, callback-rejected arguments, duplicate registration, turn limit, final buffer overflow, and model timeout propagation. Updated status and usage documentation.
+
+[2026-09-30] Added this root-level shared handoff log, documented the append protocol and verified commands, linked it from README, and added a .gitignore exception so WORKLOG.log is not excluded by *.log.
+
+Current next work
+-----------------
+1. Choose a JSON parser/schema-validation policy and enforce tool argument contracts consistently.
+2. Define conversation-history ownership and a real provider/network adapter against the existing model callback boundary.
+3. Add broader tests for callback output contracts, allocation/input limits, and trace ordering.
+4. Keep Windows as the primary verification target; WSL Ubuntu is secondary and has passed the current demo/tests.
