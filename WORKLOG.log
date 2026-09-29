@@ -51,3 +51,5 @@ Updated next work after item 1
 1. Define conversation-history ownership and implement a real provider/network adapter against the model callback boundary.
 2. Expand tests for callback output contracts, allocation/input limits, and trace ordering.
 3. Keep Windows primary; rerun WSL Ubuntu validation when WSL access is available.
+
+[2026-09-30] Added AGENTS.md with the project rule to append WORKLOG entries, verify each completed work unit, review and stage only related files, and create a local Conventional Commit without an extra prompt. Changed paths: AGENTS.md and WORKLOG.log. Verification: reviewed Git status and staged diff; instruction-only change needs no rebuild. The preceding JSON validation follow-up was committed as 95f825d. No remote push was performed.
