@@ -54,7 +54,7 @@ WSL Ubuntu에서도 다음 스크립트를 실행했다.
 wsl bash /mnt/c/Projects/posagent/tests/validate_wsl_demo.sh
 ```
 
-결과는 exit code 0, `[4/4] Success`, `All PosAgent tests passed`이다.
+기존 결과는 exit code 0, `[4/4] Success`, `All PosAgent tests passed`이다. 이번 인자 검증 변경 이후 WSL 재실행은 환경의 `E_ACCESSDENIED`로 시작하지 못했으며, 새 변경의 WSL 검증은 보류 상태다.
 
 ---
 

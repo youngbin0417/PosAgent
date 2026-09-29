@@ -88,6 +88,7 @@ struct posagent_tool {
 struct posagent_agent_tool {
     const char *name;
     const char *description;
+    /* Borrowed and immutable for the graph lifetime; only the documented schema subset is supported. */
     const char *arguments_schema_json;
     posagent_agent_tool_fn_t callback;
     void *user_data;

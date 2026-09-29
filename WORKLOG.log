@@ -43,3 +43,11 @@ Current next work
 2. Define conversation-history ownership and a real provider/network adapter against the existing model callback boundary.
 3. Add broader tests for callback output contracts, allocation/input limits, and trace ordering.
 4. Keep Windows as the primary verification target; WSL Ubuntu is secondary and has passed the current demo/tests.
+
+[2026-09-30] Completed next work item 1: added a bounded JSON parser and supported-schema validator in src/posagent_json.c/.h. Agent tool registration now rejects malformed/unsupported schemas; model tool arguments that are malformed or fail the schema return INVALID_RESPONSE before tool dispatch. Callback still owns domain/range/authorization checks. Updated src/posagent.c, Makefile, both validation scripts, behavior tests, README, and related docs; added docs/tool-argument-validation-ko.md with the exact subset and limits. Windows validation script: [4/4] Success; strict GCC build (-Werror -pedantic) and behavior tests: All PosAgent tests passed. WSL validation was attempted but the environment denied WSL instance creation (Wsl/Service/CreateInstance/E_ACCESSDENIED), so the changed code was not reverified there.
+
+Updated next work after item 1
+------------------------------
+1. Define conversation-history ownership and implement a real provider/network adapter against the model callback boundary.
+2. Expand tests for callback output contracts, allocation/input limits, and trace ordering.
+3. Keep Windows primary; rerun WSL Ubuntu validation when WSL access is available.

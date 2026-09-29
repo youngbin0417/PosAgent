@@ -34,7 +34,7 @@
 ```powershell
 cd C:\Projects\posagent
 New-Item -ItemType Directory -Force .\build | Out-Null
-gcc -I include -std=c11 -Wall -Wextra -O2 .\src\posagent.c .\examples\posagent_demo.c -o .\build\posagent_demo.exe
+gcc -I include -std=c11 -Wall -Wextra -O2 .\src\posagent.c .\src\posagent_json.c .\examples\posagent_demo.c -o .\build\posagent_demo.exe
 .\build\posagent_demo.exe
 ```
 
@@ -72,7 +72,7 @@ agent response: The doubled value is 14.
 ```bash
 cd /mnt/c/Projects/posagent
 mkdir -p build
-gcc -I include -std=c11 -Wall -Wextra -O2 src/posagent.c examples/posagent_demo.c -o build/posagent_demo
+gcc -I include -std=c11 -Wall -Wextra -O2 src/posagent.c src/posagent_json.c examples/posagent_demo.c -o build/posagent_demo
 ./build/posagent_demo
 ```
 
@@ -97,7 +97,7 @@ WSL 예시:
 ```bash
 cd /mnt/c/Projects/posagent
 mkdir -p build
-gcc -I include -std=c11 -Wall -Wextra -O2 src/posagent.c examples/posagent_demo.c -o build/posagent_demo
+gcc -I include -std=c11 -Wall -Wextra -O2 src/posagent.c src/posagent_json.c examples/posagent_demo.c -o build/posagent_demo
 ./build/posagent_demo
 ```
 
@@ -122,6 +122,7 @@ gcc -I include -std=c11 -Wall -Wextra -O2 src/posagent.c examples/posagent_demo.
 - 현재 확인: 등록부에서 tool 조회 및 callback 실행
 - 현재 확인: tool 결과를 다음 model turn에 전달
 - 현재 확인: mock model -> 등록 tool -> model 재호출 -> final response 왕복
+- 현재 확인: 제한된 스키마에 대한 도구 인자 사전 검증
 - 미확인: generic JSON Schema 검증
 - 미확인: 실제 LLM provider/network adapter
 

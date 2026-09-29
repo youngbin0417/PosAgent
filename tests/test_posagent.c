@@ -1,4 +1,5 @@
 #include "posagent.h"
+#include "../src/posagent_json.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -251,6 +252,19 @@ static int test_schema_registration(void) {
     return 0;
 }
 
+static int test_nested_argument_contract(void) {
+    const char *schema = "{\"type\":\"object\",\"properties\":{\"items\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"properties\":{\"id\":{\"type\":\"string\"}},\"required\":[\"id\"],\"additionalProperties\":false}}},\"required\":[\"items\"],\"additionalProperties\":false}";
+    CHECK(posagent_json_schema_supported(schema));
+    CHECK(posagent_json_arguments_match(schema, "{\"items\":[{\"id\":\"a\"},{\"id\":\"b\"}]}"));
+    CHECK(posagent_json_arguments_match(schema, "{\"\\u0069tems\":[]}"));
+    CHECK(!posagent_json_arguments_match(schema, "{\"items\":[{}]}"));
+    CHECK(!posagent_json_arguments_match(schema, "{\"items\":[{\"id\":1}]}"));
+    CHECK(!posagent_json_arguments_match(schema, "{\"items\":[{\"id\":\"a\",\"extra\":1}]}"));
+    CHECK(!posagent_json_arguments_match(schema, "{\"items\":[{\"id\":\"a\",\"\\u0069d\":\"b\"}]}"));
+    CHECK(!posagent_json_arguments_match(schema, "{\"items\":[{\"id\":\"\xc0\"}]}"));
+    return 0;
+}
+
 static posagent_status_t failing_model_callback(const posagent_agent_model_request_t *request, void *user_data, posagent_agent_response_t *response, posagent_result_t *result) {
     result->status = POSAGENT_ERR_TIMEOUT;
     (void)snprintf(result->message, sizeof(result->message), "mock model timeout");
@@ -285,6 +299,7 @@ int main(void) {
     CHECK(test_model_tool_round_trip() == 0);
     CHECK(test_agent_loop_error_boundaries() == 0);
     CHECK(test_schema_registration() == 0);
+    CHECK(test_nested_argument_contract() == 0);
     CHECK(test_model_error_propagation() == 0);
     puts("All PosAgent tests passed");
     return 0;

@@ -50,12 +50,35 @@ static int read_hex4(json_doc_t *doc, unsigned *value) {
     return 1;
 }
 
+static int read_utf8_tail(json_doc_t *doc, unsigned char first) {
+    int remaining;
+    if (first >= 0xc2 && first <= 0xdf) remaining = 1;
+    else if (first >= 0xe0 && first <= 0xef) remaining = 2;
+    else if (first >= 0xf0 && first <= 0xf4) remaining = 3;
+    else return 0;
+    if (doc->length - doc->position < (size_t)remaining) return 0;
+    unsigned char second = (unsigned char)doc->text[doc->position];
+    if (second < 0x80 || second > 0xbf ||
+        (first == 0xe0 && second < 0xa0) || (first == 0xed && second > 0x9f) ||
+        (first == 0xf0 && second < 0x90) || (first == 0xf4 && second > 0x8f)) return 0;
+    ++doc->position;
+    for (int i = 1; i < remaining; ++i) {
+        unsigned char next = (unsigned char)doc->text[doc->position++];
+        if (next < 0x80 || next > 0xbf) return 0;
+    }
+    return 1;
+}
+
 static int parse_string(json_doc_t *doc) {
     ++doc->position; /* opening quote */
     while (doc->position < doc->length) {
         unsigned char c = (unsigned char)doc->text[doc->position++];
         if (c == '"') return 1;
         if (c < 0x20) return 0;
+        if (c >= 0x80) {
+            if (!read_utf8_tail(doc, c)) return 0;
+            continue;
+        }
         if (c != '\\') continue;
         if (doc->position >= doc->length) return 0;
         c = (unsigned char)doc->text[doc->position++];
@@ -346,6 +369,6 @@ int posagent_json_schema_supported(const char *schema) {
 int posagent_json_arguments_match(const char *schema, const char *arguments) {
     json_doc_t schema_doc, args_doc;
     return parse_document(&schema_doc, schema) && parse_document(&args_doc, arguments) &&
-           schema_supported(&schema_doc, 0, 0) &&
+           schema_supported(&schema_doc, 0, 0) && schema_type(&schema_doc, object_get(&schema_doc, 0, "type")) == 0 &&
            match_schema(&schema_doc, 0, &args_doc, 0, 0);
 }
