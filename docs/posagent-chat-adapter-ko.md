@@ -27,4 +27,17 @@ $env:POSAGENT_CHAT_API_KEY = "your-key"
 .\build\posagent_chat_demo.exe "안녕하세요"
 ```
 
-API 키가 필요 없는 호환 게이트웨이는 `POSAGENT_CHAT_API_KEY`를 설정하지 않아도 된다. 실제 endpoint와 계정 정보는 저장소에 기록하지 않는다. `examples/posagent_chat_demo.c`는 텍스트 응답을 확인하는 최소 예제다. 도구 왕복은 `tests/test_posagent_chat.c`에서 전송 콜백을 대체하여 검증한다. 실서비스 연결은 실제 endpoint와 인증 정보가 준비된 환경에서 별도로 확인해야 한다.
+API 키가 필요 없는 호환 게이트웨이는 `POSAGENT_CHAT_API_KEY`를 설정하지 않아도 된다. 실제 endpoint와 계정 정보는 저장소에 기록하지 않는다. `tests/test_posagent_chat.c`에서는 전송 콜백을 대체해 도구 왕복을 검증한다.
+
+## 실제 endpoint 검증
+
+환경변수를 설정한 뒤 `make chat-demo`를 실행한다. 일반 텍스트 응답은 프롬프트 하나를 인자로 전달하고, 도구 왕복은 `--tool`을 전달한다.
+
+```powershell
+.\build\posagent_chat_demo.exe "Reply with exactly PONG."
+.\build\posagent_chat_demo.exe --tool
+```
+
+`--tool`은 `get_validation_marker`를 등록하고 두 번의 모델 요청 사이에 도구 결과를 전달한다. 도구가 정확히 한 번 실행되고 최종 응답에 결과의 표식이 포함될 때만 성공한다. 데모는 느린 endpoint를 고려해 90초 전송 타임아웃을 사용한다.
+
+2026-09-30에 `motif/motif-3`의 실제 Chat Completions endpoint에서 텍스트 응답과 도구 왕복을 확인했다. 인증 정보는 소스와 로그에 저장하지 않았다.

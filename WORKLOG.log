@@ -61,3 +61,22 @@ Updated next work after item 2
 1. Verify authenticated live Chat Completions behavior when an endpoint, model, and credentials are available; add a Windows-service transport if required.
 2. Expand tests for callback output contracts, allocation/input limits, and trace ordering.
 3. Keep Windows primary; rerun WSL Ubuntu validation when WSL access is available.
+
+[2026-09-30] Verified the Chat Completions adapter against an authenticated live
+endpoint using model motif/motif-3. A plain text request returned PONG, and a
+registered tool ran once before its marker appeared in the second model reply.
+Added an opt-in --tool mode to examples/posagent_chat_demo.c and documented it
+in docs/posagent-chat-adapter-ko.md. The demo timeout is now 90 seconds because
+the first tool attempt exceeded 30 seconds; the retry passed. Windows demo
+validation: [4/4] Success. Strict GCC (-Werror -pedantic) build of all targets,
+chat-demo, and both test suites passed. The restricted sandbox could not open
+WinINet HTTPS (12029); the authenticated checks passed with approved network
+access. Changed paths: examples/posagent_chat_demo.c,
+docs/posagent-chat-adapter-ko.md, WORKLOG.log. Remaining gaps: Windows-service
+WinHTTP transport, broader callback/limit/trace tests, and WSL revalidation.
+
+Updated next work after live verification
+-----------------------------------------
+1. Expand tests for callback output contracts, allocation/input limits, and trace ordering.
+2. Add a Windows-service WinHTTP transport when a service host needs it.
+3. Rerun WSL Ubuntu validation when WSL access is available.
