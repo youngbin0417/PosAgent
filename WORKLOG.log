@@ -53,3 +53,11 @@ Updated next work after item 1
 3. Keep Windows primary; rerun WSL Ubuntu validation when WSL access is available.
 
 [2026-09-30] Added AGENTS.md with the project rule to append WORKLOG entries, verify each completed work unit, review and stage only related files, and create a local Conventional Commit without an extra prompt. Changed paths: AGENTS.md and WORKLOG.log. Verification: reviewed Git status and staged diff; instruction-only change needs no rebuild. The preceding JSON validation follow-up was committed as 95f825d. No remote push was performed.
+
+[2026-09-30] Implemented OpenAI-compatible Chat Completions adapter for the existing model callback boundary. Host-owned text history is mapped to messages; the adapter retains one in-run tool call ID and sends the assistant call plus tool result on the next turn. Added bounded response parsing, a Windows WinINet HTTPS transport, an optional environment-configured chat demo, mock-transport integration tests, build/validation targets, and Korean usage/status docs. Changed paths: include/posagent_chat.h, src/posagent_chat.c, src/posagent_chat_transport.c, src/posagent_json.c/.h, examples/posagent_chat_demo.c, tests/test_posagent_chat.c, Makefile, both validation scripts, README.md, docs/, and this log. Verification: Windows script [4/4] Success; strict GCC (-Werror -pedantic) build and both test suites passed. WSL instance creation still fails with E_ACCESSDENIED. No endpoint/model/key environment variables were available, so authenticated live HTTPS behavior remains unverified. The default WinINet transport is for Windows desktop hosts; Windows services need a host-provided WinHTTP transport.
+
+Updated next work after item 2
+------------------------------
+1. Verify authenticated live Chat Completions behavior when an endpoint, model, and credentials are available; add a Windows-service transport if required.
+2. Expand tests for callback output contracts, allocation/input limits, and trace ordering.
+3. Keep Windows primary; rerun WSL Ubuntu validation when WSL access is available.

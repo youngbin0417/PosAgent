@@ -2,8 +2,9 @@
 #include "posagent.h"
 
 #include <string.h>
+#include <stdlib.h>
 
-#define JSON_MAX_TOKENS 256
+#define JSON_MAX_TOKENS 1024
 #define JSON_MAX_DEPTH 32
 
 typedef enum { JSON_OBJECT, JSON_ARRAY, JSON_STRING, JSON_NUMBER, JSON_TRUE, JSON_FALSE, JSON_NULL } json_kind_t;
@@ -16,13 +17,14 @@ typedef struct {
     int count;
 } json_token_t;
 
-typedef struct {
+struct posagent_json_doc {
     const char *text;
     size_t length;
     size_t position;
     json_token_t tokens[JSON_MAX_TOKENS];
     int count;
-} json_doc_t;
+};
+typedef struct posagent_json_doc json_doc_t;
 
 static int unique_keys(const json_doc_t *doc, int value);
 
@@ -173,11 +175,11 @@ static int parse_value(json_doc_t *doc, int depth) {
     return index;
 }
 
-static int parse_document(json_doc_t *doc, const char *text) {
+static int parse_document(json_doc_t *doc, const char *text, size_t max_bytes) {
     size_t length = 0;
     if (text == NULL) return 0;
-    while (length < POSAGENT_MAX_TOOL_JSON_SIZE && text[length] != '\0') ++length;
-    if (length == POSAGENT_MAX_TOOL_JSON_SIZE) return 0;
+    while (length < max_bytes && text[length] != '\0') ++length;
+    if (length == max_bytes) return 0;
     memset(doc, 0, sizeof(*doc));
     doc->text = text;
     doc->length = length;
@@ -363,12 +365,97 @@ static int match_schema(const json_doc_t *schema_doc, int schema, const json_doc
 
 int posagent_json_schema_supported(const char *schema) {
     json_doc_t doc;
-    return parse_document(&doc, schema) && schema_supported(&doc, 0, 0) && schema_type(&doc, object_get(&doc, 0, "type")) == 0;
+    return parse_document(&doc, schema, POSAGENT_MAX_TOOL_JSON_SIZE) && schema_supported(&doc, 0, 0) && schema_type(&doc, object_get(&doc, 0, "type")) == 0;
 }
 
 int posagent_json_arguments_match(const char *schema, const char *arguments) {
     json_doc_t schema_doc, args_doc;
-    return parse_document(&schema_doc, schema) && parse_document(&args_doc, arguments) &&
+    return parse_document(&schema_doc, schema, POSAGENT_MAX_TOOL_JSON_SIZE) && parse_document(&args_doc, arguments, POSAGENT_MAX_TOOL_JSON_SIZE) &&
            schema_supported(&schema_doc, 0, 0) && schema_type(&schema_doc, object_get(&schema_doc, 0, "type")) == 0 &&
            match_schema(&schema_doc, 0, &args_doc, 0, 0);
+}
+
+posagent_json_doc_t *posagent_json_parse(const char *text, size_t max_bytes) {
+    if (max_bytes == 0) return NULL;
+    json_doc_t *doc = (json_doc_t *)malloc(sizeof(*doc));
+    if (doc == NULL) return NULL;
+    if (!parse_document(doc, text, max_bytes)) { free(doc); return NULL; }
+    return doc;
+}
+
+void posagent_json_free(posagent_json_doc_t *doc) { free(doc); }
+
+int posagent_json_object_get(const posagent_json_doc_t *doc, int object, const char *key) {
+    if (doc == NULL || key == NULL || object < 0 || object >= doc->count || doc->tokens[object].kind != JSON_OBJECT) return -1;
+    return object_get(doc, object, key);
+}
+
+int posagent_json_array_count(const posagent_json_doc_t *doc, int array) {
+    return doc != NULL && array >= 0 && array < doc->count && doc->tokens[array].kind == JSON_ARRAY ? doc->tokens[array].count : -1;
+}
+
+int posagent_json_array_item(const posagent_json_doc_t *doc, int array, int item) {
+    if (posagent_json_array_count(doc, array) <= item || item < 0) return -1;
+    int token = array + 1;
+    for (int i = 0; i < item; ++i) token = doc->tokens[token].next;
+    return token;
+}
+
+int posagent_json_is_object(const posagent_json_doc_t *doc, int token) { return doc != NULL && token >= 0 && token < doc->count && doc->tokens[token].kind == JSON_OBJECT; }
+int posagent_json_is_array(const posagent_json_doc_t *doc, int token) { return doc != NULL && token >= 0 && token < doc->count && doc->tokens[token].kind == JSON_ARRAY; }
+int posagent_json_is_string(const posagent_json_doc_t *doc, int token) { return doc != NULL && token >= 0 && token < doc->count && doc->tokens[token].kind == JSON_STRING; }
+int posagent_json_is_null(const posagent_json_doc_t *doc, int token) { return doc != NULL && token >= 0 && token < doc->count && doc->tokens[token].kind == JSON_NULL; }
+
+static int append_byte(char *out, size_t capacity, size_t *used, unsigned char byte) {
+    if (*used + 1 >= capacity) return 0;
+    out[(*used)++] = (char)byte;
+    return 1;
+}
+
+static int append_codepoint(char *out, size_t capacity, size_t *used, unsigned code) {
+    if (code < 0x80) return append_byte(out, capacity, used, (unsigned char)code);
+    if (code < 0x800) return append_byte(out, capacity, used, (unsigned char)(0xc0 | (code >> 6))) && append_byte(out, capacity, used, (unsigned char)(0x80 | (code & 63)));
+    if (code < 0x10000) return append_byte(out, capacity, used, (unsigned char)(0xe0 | (code >> 12))) && append_byte(out, capacity, used, (unsigned char)(0x80 | ((code >> 6) & 63))) && append_byte(out, capacity, used, (unsigned char)(0x80 | (code & 63)));
+    return append_byte(out, capacity, used, (unsigned char)(0xf0 | (code >> 18))) && append_byte(out, capacity, used, (unsigned char)(0x80 | ((code >> 12) & 63))) && append_byte(out, capacity, used, (unsigned char)(0x80 | ((code >> 6) & 63))) && append_byte(out, capacity, used, (unsigned char)(0x80 | (code & 63)));
+}
+
+static unsigned read_codepoint(const char *text, size_t *position) {
+    unsigned code = 0;
+    for (int i = 0; i < 4; ++i) {
+        unsigned char c = (unsigned char)text[(*position)++];
+        code = code * 16 + (unsigned)(c <= '9' ? c - '0' : (c <= 'F' ? c - 'A' + 10 : c - 'a' + 10));
+    }
+    return code;
+}
+
+int posagent_json_copy_string(const posagent_json_doc_t *doc, int token, char *out, size_t capacity) {
+    if (!posagent_json_is_string(doc, token) || out == NULL || capacity == 0) return 0;
+    size_t used = 0, position = doc->tokens[token].start + 1, end = doc->tokens[token].end - 1;
+    while (position < end) {
+        unsigned char c = (unsigned char)doc->text[position++];
+        if (c != '\\') { if (!append_byte(out, capacity, &used, c)) return 0; continue; }
+        c = (unsigned char)doc->text[position++];
+        if (c == 'u') {
+            unsigned code = read_codepoint(doc->text, &position);
+            if (code >= 0xd800 && code <= 0xdbff) {
+                position += 2;
+                code = 0x10000 + ((code - 0xd800) << 10) + read_codepoint(doc->text, &position) - 0xdc00;
+            }
+            if (code == 0 || !append_codepoint(out, capacity, &used, code)) return 0;
+        } else {
+            unsigned char decoded = c == 'b' ? '\b' : c == 'f' ? '\f' : c == 'n' ? '\n' : c == 'r' ? '\r' : c == 't' ? '\t' : c;
+            if (decoded == 0 || !append_byte(out, capacity, &used, decoded)) return 0;
+        }
+    }
+    out[used] = '\0';
+    return 1;
+}
+
+int posagent_json_copy_raw(const posagent_json_doc_t *doc, int token, char *out, size_t capacity) {
+    if (doc == NULL || token < 0 || token >= doc->count || out == NULL) return 0;
+    size_t length = doc->tokens[token].end - doc->tokens[token].start;
+    if (length >= capacity) return 0;
+    memcpy(out, doc->text + doc->tokens[token].start, length);
+    out[length] = '\0';
+    return 1;
 }

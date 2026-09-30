@@ -34,7 +34,7 @@
 ```powershell
 cd C:\Projects\posagent
 New-Item -ItemType Directory -Force .\build | Out-Null
-gcc -I include -std=c11 -Wall -Wextra -O2 .\src\posagent.c .\src\posagent_json.c .\examples\posagent_demo.c -o .\build\posagent_demo.exe
+gcc -I include -std=c11 -Wall -Wextra -O2 .\src\posagent.c .\src\posagent_json.c .\src\posagent_chat.c .\src\posagent_chat_transport.c .\examples\posagent_demo.c -o .\build\posagent_demo.exe -lwininet
 .\build\posagent_demo.exe
 ```
 
@@ -72,7 +72,7 @@ agent response: The doubled value is 14.
 ```bash
 cd /mnt/c/Projects/posagent
 mkdir -p build
-gcc -I include -std=c11 -Wall -Wextra -O2 src/posagent.c src/posagent_json.c examples/posagent_demo.c -o build/posagent_demo
+gcc -I include -std=c11 -Wall -Wextra -O2 src/posagent.c src/posagent_json.c src/posagent_chat.c src/posagent_chat_transport.c examples/posagent_demo.c -o build/posagent_demo
 ./build/posagent_demo
 ```
 
@@ -97,7 +97,7 @@ WSL 예시:
 ```bash
 cd /mnt/c/Projects/posagent
 mkdir -p build
-gcc -I include -std=c11 -Wall -Wextra -O2 src/posagent.c src/posagent_json.c examples/posagent_demo.c -o build/posagent_demo
+gcc -I include -std=c11 -Wall -Wextra -O2 src/posagent.c src/posagent_json.c src/posagent_chat.c src/posagent_chat_transport.c examples/posagent_demo.c -o build/posagent_demo
 ./build/posagent_demo
 ```
 
@@ -124,7 +124,8 @@ gcc -I include -std=c11 -Wall -Wextra -O2 src/posagent.c src/posagent_json.c exa
 - 현재 확인: mock model -> 등록 tool -> model 재호출 -> final response 왕복
 - 현재 확인: 제한된 스키마에 대한 도구 인자 사전 검증
 - 미확인: generic JSON Schema 검증
-- 미확인: 실제 LLM provider/network adapter
+- 현재 확인: Chat Completions 어댑터 모의 전송 테스트와 Windows HTTPS 전송 빌드
+- 미확인: 실제 LLM endpoint와의 HTTPS 왕복
 
 ### 6.4 실패 시나리오
 

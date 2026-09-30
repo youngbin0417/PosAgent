@@ -4,7 +4,7 @@ PosAgent is a lightweight C graph runtime prototype intended to embed agent work
 
 ## Current status
 
-The Windows demo verifies a mock model -> registered tool -> model round-trip, plus the minimal graph run. Tool arguments are checked against a documented JSON Schema subset before dispatch. No external model provider/network adapter or generic JSON Schema validator is included yet. See [the verification status](docs/verification-status-ko.md) and [argument validation contract](docs/tool-argument-validation-ko.md).
+The Windows demo verifies a mock model -> registered tool -> model round-trip, plus the minimal graph run. Tool arguments are checked against a documented JSON Schema subset before dispatch. An OpenAI-compatible Chat Completions adapter and Windows HTTPS transport are included; live endpoint integration is not verified yet. See [the verification status](docs/verification-status-ko.md), [chat adapter guide](docs/posagent-chat-adapter-ko.md), and [argument validation contract](docs/tool-argument-validation-ko.md).
 
 ## Layout
 
@@ -25,6 +25,8 @@ make
 make test
 make run
 ```
+
+Build the optional live Chat Completions demo with `make chat-demo`; see the [adapter guide](docs/posagent-chat-adapter-ko.md) for configuration.
 
 On Windows PowerShell, run:
 

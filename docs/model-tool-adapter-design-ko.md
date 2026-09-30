@@ -4,7 +4,7 @@
 
 이 문서는 PosAgent 그래프에 모델 호출과 도구 실행을 연결하는 경계를 정의한다. 모델 공급자별 HTTP/SDK 구현은 그래프 코어와 분리하고, 모델이 요청한 도구는 호스트가 등록한 도구만 실행하도록 한다.
 
-현재 코드에는 외부 provider/network adapter는 없지만, provider-neutral `posagent_agent_model_fn_t` mock contract와 등록 agent-tool dispatch는 구현되어 있다. `posagent_context_run_agent()`는 model callback에 상태, 허용 도구 정보, 직전 도구 결과를 전달하고 final 또는 단일 tool call을 처리한다. 기존 `posagent_tool_invoke()`는 별도의 typed C callback API로 계속 제공된다.
+현재 코드에는 OpenAI 호환 Chat Completions 어댑터와 Windows WinINet HTTPS 전송 경로가 있다. 실제 endpoint 왕복은 아직 검증되지 않았다. `posagent_context_run_agent()`는 model callback에 상태, 허용 도구 정보, 직전 도구 결과를 전달하고 final 또는 단일 tool call을 처리한다. 기존 `posagent_tool_invoke()`는 별도의 typed C callback API로 계속 제공된다. 구현 계약은 [어댑터 설명서](posagent-chat-adapter-ko.md)를 참고한다.
 
 ## 2. 목표 실행 흐름
 
@@ -56,7 +56,7 @@
 - 등록 도구 이름, 설명, 인자 schema 목록
 - 직전 tool 결과와 turn index
 
-현재 callback API는 대화 transcript/system prompt/timeout/cancel을 별도 타입으로 제공하지 않는다. 호스트는 필요 시 상태/user_data에서 대화 이력을 관리하고 실제 provider adapter가 이를 공급자 request로 변환해야 한다.
+현재 core callback API는 대화 transcript/system prompt/timeout/cancel을 별도 타입으로 제공하지 않는다. 호스트는 `posagent_chat_config_t`의 history로 텍스트 기록을 제공하고 어댑터가 이를 공급자 request로 변환한다.
 
 모델 어댑터는 다음 결과 중 하나를 반환한다.
 
@@ -91,7 +91,7 @@
 7. 모델 노드로 돌아가 최대 왕복 횟수 안에서 반복한다.
 8. 알 수 없는 도구, 잘못된 응답, 도구 실패, 최대 횟수 초과는 명확한 오류 코드로 끝낸다.
 
-현재 API는 한 model response에서 tool call 하나만 반환할 수 있다. 여러 호출 배열, 대화 transcript 타입, provider network, 병렬 실행은 지원하지 않는다.
+현재 API는 한 model response에서 tool call 하나만 반환할 수 있다. Chat 어댑터도 실행당 단일 tool call만 지원한다. 여러 호출 배열, core 대화 transcript 타입, 병렬 실행은 지원하지 않는다.
 
 ## 7. 보안 및 운영 기준
 
@@ -115,7 +115,8 @@
 
 1. 완료: 등록 도구 dispatch와 mock model callback contract
 2. 완료: 단일 tool call loop, max turns, 핵심 오류 경계 테스트
-3. 다음: provider/network adapter와 conversation-history mapping
-4. 이후 결정: 스키마 부분집합 확장, multiple calls, timeout/retry
+3. 완료: Chat Completions 어댑터, 호스트 소유 history mapping, Windows HTTPS 경로의 빌드와 모의 전송 테스트
+4. 다음: 실제 endpoint 통합 검증, 서비스 호스트용 WinHTTP 전송
+5. 이후 결정: 스키마 부분집합 확장, multiple calls, timeout/retry
 
 LangGraph 기능을 한 번에 복제하지 않는다. 우선 목표는 단일 호스트에서 안전한 모델-도구 왕복이 동작하는 것이다.

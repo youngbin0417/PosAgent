@@ -19,7 +19,7 @@
 
 ### 아직 확인되지 않았거나 구현되지 않은 것
 
-- 실제 LLM provider adapter와 network 왕복
+- 실제 LLM endpoint와의 인증된 network 왕복 (어댑터는 모의 전송으로 검증)
 - 범용 JSON Schema 지원 (현재 제한된 타입/구조만 런타임에서 검증)
 - 대화 이력 전체의 저장/전달 정책
 - 한 응답 내 다중 tool call 처리
@@ -36,7 +36,7 @@
 | 2. 실도구 디스패치 | 등록 도구 조회, callback, 결과 전달 | 완료 | unknown tool/인자 실패 테스트 통과 |
 | 3. Model contract | provider-neutral callback과 tool metadata 전달 | 완료 | mock callback이 schema metadata와 이전 결과 확인 |
 | 4. Agent loop | model -> tool dispatch -> model, max turns | 완료 | round trip, turn 제한, final buffer 테스트 통과 |
-| 5. 실제 endpoint 연결 | 사내 모델 gateway adapter 한 가지 | 미착수 | 실제 provider가 mock과 동일 contract로 동작 |
+| 5. 실제 endpoint 연결 | OpenAI 호환 Chat Completions 어댑터와 실제 gateway 검증 | 어댑터/Windows HTTPS 경로 구현, 실연동 미검증 | 실제 provider가 mock과 동일 contract로 동작 |
 | 6. 배포 검증 | Windows 기준 안정화 후 WSL/Linux 보조 검증 | Windows 및 WSL Ubuntu 확인 | 양 환경에서 동일 API 계약과 결과 확인 |
 
 ## 4. 단계 1의 필수 테스트
@@ -75,7 +75,7 @@
 
 ## 7. 당장 착수할 순서
 
-1. 실제 endpoint/provider와 credential 설정 방식을 결정한다.
+1. OpenAI 호환 endpoint와 credential 설정을 실제 환경에서 검증한다.
 2. conversation history ownership을 결정하고 현재 제한된 JSON 스키마의 확장 필요성을 평가한다.
-3. mock contract를 유지하며 provider adapter와 선택적 integration test를 추가한다.
+3. mock contract를 유지하며 provider adapter의 실제 integration test를 추가한다.
 4. 필요 시 multiple tool calls 및 timeout/retry 정책을 확장한다.

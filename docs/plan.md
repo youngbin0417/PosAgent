@@ -6,7 +6,7 @@
 
 PosAgent는 기존 C/C++ 기반 시스템에 AI 에이전트 실행 흐름을 삽입할 수 있도록 지원하는 경량 그래프 런타임을 정의한다. 본 문서는 단순한 기획서가 아니라, 구현을 위한 설계 기준과 인터페이스 계약을 정리한 실제 설계 문서로 작성한다.
 
-현재 코드 상태: Windows에서 그래프 정상 경로와 mock model -> registered tool -> model 왕복을 확인했다. 실제 provider/network adapter와 generic JSON Schema 검증은 미구현이다. 기능별 완료 상태는 `verification-status-ko.md`를 기준으로 판단한다.
+현재 코드 상태: Windows에서 그래프 정상 경로와 mock model -> registered tool -> model 왕복을 확인했다. OpenAI 호환 Chat Completions 어댑터와 Windows HTTPS 경로가 추가되었으나 실제 endpoint 왕복은 미검증이다. generic JSON Schema 검증도 미구현이다. 기능별 완료 상태는 `verification-status-ko.md`를 기준으로 판단한다.
 
 핵심 목적은 다음과 같다.
 

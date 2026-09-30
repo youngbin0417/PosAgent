@@ -87,7 +87,7 @@ PowerShell에서 다음 명령으로 빌드합니다.
 ```powershell
 cd C:\Projects\posagent
 New-Item -ItemType Directory -Force .\build | Out-Null
-gcc -I include -std=c11 -Wall -Wextra -O2 .\src\posagent.c .\src\posagent_json.c .\examples\posagent_demo.c -o .\build\posagent_demo.exe
+gcc -I include -std=c11 -Wall -Wextra -O2 .\src\posagent.c .\src\posagent_json.c .\src\posagent_chat.c .\src\posagent_chat_transport.c .\examples\posagent_demo.c -o .\build\posagent_demo.exe -lwininet
 .\build\posagent_demo.exe
 ```
 
@@ -96,7 +96,7 @@ gcc -I include -std=c11 -Wall -Wextra -O2 .\src\posagent.c .\src\posagent_json.c
 ```bash
 cd /mnt/c/Projects/posagent
 mkdir -p build
-gcc -I include -std=c11 -Wall -Wextra -O2 src/posagent.c src/posagent_json.c examples/posagent_demo.c -o build/posagent_demo
+gcc -I include -std=c11 -Wall -Wextra -O2 src/posagent.c src/posagent_json.c src/posagent_chat.c src/posagent_chat_transport.c examples/posagent_demo.c -o build/posagent_demo
 ./build/posagent_demo
 ```
 
@@ -285,7 +285,8 @@ printf("status=%d code=%d message=%s\n", result.status, result.code, result.mess
 
 다음 기능은 아직 구현 또는 검증되지 않았습니다.
 
-- [ ] 외부 LLM/model provider 및 네트워크 연결
+- [x] OpenAI 호환 Chat Completions 어댑터와 Windows HTTPS 전송 경로 (모의 전송 테스트)
+- [ ] 실제 LLM endpoint 네트워크 왕복 검증
 - [ ] 범용 JSON Schema validator
 - [ ] 대화 이력 저장과 여러 tool call 처리
 - [ ] timeout/cancel 상태의 실제 처리 (상태 코드 정의만 존재)
@@ -318,7 +319,7 @@ printf("status=%d code=%d message=%s\n", result.status, result.code, result.mess
 현재 단계의 목표는 다음과 같습니다.
 
 1. mock model/tool 왕복의 오류 경계 추가
-2. 실제 provider adapter와 대화 이력 계약 설계
+2. 실제 endpoint에서 provider adapter의 인증과 응답 호환성 검증
 3. 필요하면 JSON Schema 검증 라이브러리 도입
 4. 추가 플랫폼 확장은 Windows 안정화 뒤 진행
 
@@ -328,6 +329,6 @@ printf("status=%d code=%d message=%s\n", result.status, result.code, result.mess
 
 ## 14. 결론
 
-PosAgent는 기존 C/C++ 프로그램에 AI 실행 흐름을 연결하기 위한 경량 런타임을 목표로 합니다. 현재 Windows 샘플은 mock model과 등록 tool 사이의 제한된 왕복을 실행합니다. 실제 LLM provider 통합, 일반 JSON Schema 강제, 여러 tool call과 영속 대화 이력은 아직 지원하지 않습니다.
+PosAgent는 기존 C/C++ 프로그램에 AI 실행 흐름을 연결하기 위한 경량 런타임을 목표로 합니다. 현재 Windows 샘플은 mock model과 등록 tool 사이의 제한된 왕복을 실행하고, 별도 Chat Completions 어댑터는 모의 전송 테스트를 통과했습니다. 실제 LLM endpoint 통합, 일반 JSON Schema 강제, 여러 tool call과 영속 대화 이력은 아직 검증되지 않았습니다.
 
 이 문서는 사용자가 바로 시작할 수 있도록 핵심 개념과 실행 예제를 함께 정리한 설명서입니다.
